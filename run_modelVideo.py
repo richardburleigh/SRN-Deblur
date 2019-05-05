@@ -23,8 +23,10 @@ def parse_args():
                         help='input path for testing images')
     parser.add_argument('--output_path', type=str, default='./testing_res',
                         help='output path for testing images')
-    parser.add_argument('--video_filepath', type=str, default='./test.mp4',
-                        help='input path file for test video')
+    parser.add_argument('--video_filepath_input', type=str, default='./test.mp4',
+                        help='fill path file input for test video')
+    parser.add_argument('--video_filepath_output', type=str, default='./result.mp4',
+                        help='fill path file output for test video')
     parser.add_argument('--step', type=int, default=523000,
                         help='input step to use model')
     args = parser.parse_args()
@@ -47,7 +49,7 @@ def main(_):
     elif args.phase == 'train':
         deblur.train()
     elif args.phase == 'testVideo':
-        deblur.testVideo(args.height, args.width, args.input_path, args.output_path, args.step, args.video_filepath)
+        deblur.testVideo(args.height, args.width, args.input_path, args.output_path, args.step, args.video_filepath_input, args.video_filepath_output)
     else:
         print('phase should be set to either test or train')
 

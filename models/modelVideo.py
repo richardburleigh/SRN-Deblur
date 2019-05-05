@@ -15,12 +15,12 @@ import cv2
 from os.path import isfile, join
 
 class DEBLUR(object):
-    def videoToFrames(self, video_filepath):
+    def videoToFrames(self, video_filepath, input_path = './testing_set'):
         vidcap = cv2.VideoCapture(video_filepath)
         success,image = vidcap.read()
         count = 0
         while success:
-          cv2.imwrite("testing_set/frame%d.jpg" % count, image)     # save frame as JPEG file
+          cv2.imwrite(input_path + "/frame%d.jpg" % count, image)     # save frame as JPEG file
           success,image = vidcap.read()
           print('Read a new frame: ', success)
           count += 1
@@ -35,7 +35,7 @@ class DEBLUR(object):
         files.sort(key = lambda x: int(x[5:-4]))
 
         for i in range(len(files)):
-            filename=pathIn + files[i]
+            filename=pathIn + '/' + files[i]
             #reading each files
             img = cv2.imread(filename)
             height, width, layers = img.shape
@@ -51,9 +51,8 @@ class DEBLUR(object):
             out.write(frame_array[i])
         out.release()
 
-    def testVideo(self, height, width, input_path, output_path,input_step=523000, video_filepath='test.mp4'):
-        #return self.convert_frames_to_video('testing_set/', './blur.mp4', 11.0)
-        fps = self.videoToFrames(video_filepath)
+    def testVideo(self, height, width, input_path, output_path, input_step = 523000, video_filepath_input = './test.mp4', video_filepath_output = './result.mp4'):
+        fps = self.videoToFrames(video_filepath_input, input_path)
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         imgsName = sorted(os.listdir(input_path))
@@ -112,7 +111,7 @@ class DEBLUR(object):
                 res = np.transpose(res, [1, 0, 2])
             scipy.misc.imsave(os.path.join(output_path, imgName), res)
 
-        self.convert_frames_to_video('testing_res/', './result.mp4', fps)
+        self.convert_frames_to_video(output_path, video_filepath_output, fps)
 
     def __init__(self, args):
         self.args = args
