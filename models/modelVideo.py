@@ -53,7 +53,7 @@ class DEBLUR(object):
 
     def testVideo(self, height, width, input_path, output_path, input_step = 523000, video_filepath_input = './test.mp4', video_filepath_output = './result.mp4'):
         fps = self.videoToFrames(video_filepath_input, input_path)
-        self.test(self, height, width, input_path, output_path, input_step)
+        self.test(height, width, input_path, output_path, input_step)
         self.convert_frames_to_video(output_path, video_filepath_output, fps)
 
     def __init__(self, args):
