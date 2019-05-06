@@ -53,64 +53,7 @@ class DEBLUR(object):
 
     def testVideo(self, height, width, input_path, output_path, input_step = 523000, video_filepath_input = './test.mp4', video_filepath_output = './result.mp4'):
         fps = self.videoToFrames(video_filepath_input, input_path)
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
-        imgsName = sorted(os.listdir(input_path))
-
-        H, W = height, width
-        inp_chns = 3 if self.args.model == 'color' else 1
-        self.batch_size = 1 if self.args.model == 'color' else 3
-        inputs = tf.placeholder(shape=[self.batch_size, H, W, inp_chns], dtype=tf.float32)
-        outputs = self.generator(inputs, reuse=False)
-
-        sess = tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True)))
-
-        self.saver = tf.train.Saver()
-        self.load(sess, self.train_dir, step=input_step)
-
-        for imgName in imgsName:
-            blur = scipy.misc.imread(os.path.join(input_path, imgName))
-            h, w, c = blur.shape
-            # make sure the width is larger than the height
-            rot = False
-            if h > w:
-                blur = np.transpose(blur, [1, 0, 2])
-                rot = True
-            h = int(blur.shape[0])
-            w = int(blur.shape[1])
-            resize = False
-            if h > H or w > W:
-                scale = min(1.0 * H / h, 1.0 * W / w)
-                new_h = int(h * scale)
-                new_w = int(w * scale)
-                blur = scipy.misc.imresize(blur, [new_h, new_w], 'bicubic')
-                resize = True
-                blurPad = np.pad(blur, ((0, H - new_h), (0, W - new_w), (0, 0)), 'edge')
-            else:
-                blurPad = np.pad(blur, ((0, H - h), (0, W - w), (0, 0)), 'edge')
-            blurPad = np.expand_dims(blurPad, 0)
-            if self.args.model != 'color':
-                blurPad = np.transpose(blurPad, (3, 1, 2, 0))
-
-            start = time.time()
-            deblur = sess.run(outputs, feed_dict={inputs: blurPad / 255.0})
-            duration = time.time() - start
-            print('Saving results: %s ... %4.3fs' % (os.path.join(output_path, imgName), duration))
-            res = deblur[-1]
-            if self.args.model != 'color':
-                res = np.transpose(res, (3, 1, 2, 0))
-            res = im2uint8(res[0, :, :, :])
-            # crop the image into original size
-            if resize:
-                res = res[:new_h, :new_w, :]
-                res = scipy.misc.imresize(res, [h, w], 'bicubic')
-            else:
-                res = res[:h, :w, :]
-
-            if rot:
-                res = np.transpose(res, [1, 0, 2])
-            scipy.misc.imsave(os.path.join(output_path, imgName), res)
-
+        self.test(self, height, width, input_path, output_path, input_step)
         self.convert_frames_to_video(output_path, video_filepath_output, fps)
 
     def __init__(self, args):
@@ -330,8 +273,8 @@ class DEBLUR(object):
 
             # Save the model checkpoint periodically.
             if step % 1000 == 0 or step == self.max_steps:
-                checkpoint_path = os.path.join(self.train_dir, 'checkpoints')
-                self.save(sess, checkpoint_path, step)
+                #checkpoint_path = os.path.join(self.train_dir, 'checkpoints')
+                self.save(sess, self.train_dir, step)
 
     def save(self, sess, checkpoint_dir, step):
         model_name = "deblur.model"

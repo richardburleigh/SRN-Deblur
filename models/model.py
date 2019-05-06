@@ -11,8 +11,51 @@ from datetime import datetime
 from util.util import *
 from util.BasicConvLSTMCell import *
 
+import cv2
+from os.path import isfile, join
 
 class DEBLUR(object):
+    def videoToFrames(self, video_filepath, input_path = './testing_set'):
+        vidcap = cv2.VideoCapture(video_filepath)
+        success,image = vidcap.read()
+        count = 0
+        while success:
+          cv2.imwrite(input_path + "/frame%d.jpg" % count, image)     # save frame as JPEG file
+          success,image = vidcap.read()
+          print('Read a new frame: ', success)
+          count += 1
+        vidcap.set(cv2.CAP_PROP_POS_AVI_RATIO,1)
+        fps = 1000*vidcap.get(cv2.CAP_PROP_FRAME_COUNT)/ vidcap.get(cv2.CAP_PROP_POS_MSEC)
+        return fps
+
+    def convert_frames_to_video(self, pathIn, pathOut, fps):
+        frame_array = []
+        files = [f for f in os.listdir(pathIn) if isfile(join(pathIn, f))]
+        #for sorting the file names properly
+        files.sort(key = lambda x: int(x[5:-4]))
+
+        for i in range(len(files)):
+            filename=pathIn + '/' + files[i]
+            #reading each files
+            img = cv2.imread(filename)
+            height, width, layers = img.shape
+            size = (width,height)
+            print(filename)
+            #inserting the frames into an image array
+            frame_array.append(img)
+
+        out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
+
+        for i in range(len(frame_array)):
+            # writing to a image array
+            out.write(frame_array[i])
+        out.release()
+
+    def testVideo(self, height, width, input_path, output_path, input_step = 523000, video_filepath_input = './test.mp4', video_filepath_output = './result.mp4'):
+        fps = self.videoToFrames(video_filepath_input, input_path)
+        self.test(self, height, width, input_path, output_path, input_step)
+        self.convert_frames_to_video(output_path, video_filepath_output, fps)
+
     def __init__(self, args):
         self.args = args
         self.n_levels = 3
@@ -230,8 +273,8 @@ class DEBLUR(object):
 
             # Save the model checkpoint periodically.
             if step % 1000 == 0 or step == self.max_steps:
-                checkpoint_path = os.path.join(self.train_dir, 'checkpoints')
-                self.save(sess, checkpoint_path, step)
+                #checkpoint_path = os.path.join(self.train_dir, 'checkpoints')
+                self.save(sess, self.train_dir, step)
 
     def save(self, sess, checkpoint_dir, step):
         model_name = "deblur.model"
@@ -259,7 +302,7 @@ class DEBLUR(object):
             print(" [*] Reading checkpoints... ERROR")
             return False
 
-    def test(self, height, width, input_path, output_path):
+    def test(self, height, width, input_path, output_path, input_step=523000):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         imgsName = sorted(os.listdir(input_path))
@@ -273,7 +316,7 @@ class DEBLUR(object):
         sess = tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True)))
 
         self.saver = tf.train.Saver()
-        self.load(sess, self.train_dir, step=523000)
+        self.load(sess, self.train_dir, step=input_step)
 
         for imgName in imgsName:
             blur = scipy.misc.imread(os.path.join(input_path, imgName))
