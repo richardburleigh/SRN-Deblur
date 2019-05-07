@@ -8,9 +8,10 @@ import models.model as model
 
 def parse_args():
     parser = argparse.ArgumentParser(description='deblur arguments')
-    parser.add_argument('--phase', type=str, default='testVideo', help='determine whether train or test or testVideo')
+    parser.add_argument('--phase', type=str, default='test', help='determine whether train or test or testVideo')
     parser.add_argument('--datalist', type=str, default='./datalist_gopro.txt', help='training datalist')
     parser.add_argument('--model', type=str, default='color', help='model type: [lstm | gray | color]')
+    parser.add_argument('--incremental_training', type=int, default=0, help='continue training with saved model or not')
     parser.add_argument('--batch_size', help='training batch size', type=int, default=16)
     parser.add_argument('--epoch', help='training epoch number', type=int, default=4000)
     parser.add_argument('--lr', type=float, default=1e-4, dest='learning_rate', help='initial learning rate')
@@ -28,7 +29,7 @@ def parse_args():
     parser.add_argument('--video_filepath_output', type=str, default='./result.mp4',
                         help='fill path file output for test video')
     parser.add_argument('--step', type=int, default=None,
-                        help='input step to use model')
+                        help='input step to use pip install --upgrade tensorflowmodel')
     args = parser.parse_args()
     return args
 

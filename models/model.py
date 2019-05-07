@@ -219,12 +219,23 @@ class DEBLUR(object):
                 train_op = train_op.minimize(loss, global_step, var_list)
             return train_op
 
-        global_step = tf.Variable(initial_value=0, dtype=tf.int32, trainable=False)
+        init_global_step = 0
+        if self.args.incremental_training == 1:
+            if self.args.step is not None:
+                init_global_step = self.args.step
+            else:
+                ckpt = tf.train.get_checkpoint_state(self.train_dir)
+                ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
+                ckpt_iter = ckpt_name.split('-')[1]
+                init_global_step = int(ckpt_iter)
+        self.max_steps += init_global_step
+
+        global_step = tf.Variable(initial_value=init_global_step, dtype=tf.int32, trainable=False)
         self.global_step = global_step
 
         # build model
         self.build_model()
-
+           
         # learning rate decay
         self.lr = tf.train.polynomial_decay(self.learning_rate, global_step, self.max_steps, end_learning_rate=0.0,
                                             power=0.3)
@@ -236,9 +247,11 @@ class DEBLUR(object):
         # session and thread
         gpu_options = tf.GPUOptions(allow_growth=True)
         sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-        self.sess = sess
         sess.run(tf.global_variables_initializer())
         self.saver = tf.train.Saver(max_to_keep=50, keep_checkpoint_every_n_hours=1)
+        if self.args.incremental_training == 1:
+            init_global_step = int(self.load(sess, self.train_dir, step=self.args.step))
+        self.sess = sess    
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
