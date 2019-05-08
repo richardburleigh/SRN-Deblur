@@ -14,44 +14,46 @@ from util.BasicConvLSTMCell import *
 import cv2
 from os.path import isfile, join
 
+
 class DEBLUR(object):
-    def videoToFrames(self, video_filepath, input_path = './testing_set'):
+    def videoToFrames(self, video_filepath, input_path='./testing_set'):
         vidcap = cv2.VideoCapture(video_filepath)
-        success,image = vidcap.read()
+        success, image = vidcap.read()
         count = 0
         while success:
-          cv2.imwrite(input_path + "/frame%d.jpg" % count, image)     # save frame as JPEG file
-          success,image = vidcap.read()
-          print('Read a new frame: ', success)
-          count += 1
-        vidcap.set(cv2.CAP_PROP_POS_AVI_RATIO,1)
-        fps = 1000*vidcap.get(cv2.CAP_PROP_FRAME_COUNT)/ vidcap.get(cv2.CAP_PROP_POS_MSEC)
+            cv2.imwrite(input_path + "/frame%d.jpg" % count, image)  # save frame as JPEG file
+            success, image = vidcap.read()
+            print('Read a new frame: ', success)
+            count += 1
+        vidcap.set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
+        fps = 1000 * vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / vidcap.get(cv2.CAP_PROP_POS_MSEC)
         return fps
 
     def convert_frames_to_video(self, pathIn, pathOut, fps):
         frame_array = []
         files = [f for f in os.listdir(pathIn) if isfile(join(pathIn, f))]
-        #for sorting the file names properly
-        files.sort(key = lambda x: int(x[5:-4]))
+        # for sorting the file names properly
+        files.sort(key=lambda x: int(x[5:-4]))
 
         for i in range(len(files)):
-            filename=pathIn + '/' + files[i]
-            #reading each files
+            filename = pathIn + '/' + files[i]
+            # reading each files
             img = cv2.imread(filename)
             height, width, layers = img.shape
-            size = (width,height)
+            size = (width, height)
             print(filename)
-            #inserting the frames into an image array
+            # inserting the frames into an image array
             frame_array.append(img)
 
-        out = cv2.VideoWriter(pathOut,cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
+        out = cv2.VideoWriter(pathOut, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
 
         for i in range(len(frame_array)):
             # writing to a image array
             out.write(frame_array[i])
         out.release()
 
-    def testVideo(self, height, width, input_path, output_path, input_step = 523000, video_filepath_input = './test.mp4', video_filepath_output = './result.mp4'):
+    def testVideo(self, height, width, input_path, output_path, input_step=523000, video_filepath_input='./test.mp4',
+                  video_filepath_output='./result.mp4'):
         fps = self.videoToFrames(video_filepath_input, input_path)
         self.test(height, width, input_path, output_path, input_step)
         self.convert_frames_to_video(output_path, video_filepath_output, fps)
@@ -90,8 +92,9 @@ class DEBLUR(object):
             imgs = [tf.cast(img, tf.float32) / 255.0 for img in imgs]
             if self.args.model != 'color':
                 imgs = [tf.image.rgb_to_grayscale(img) for img in imgs]
-            img_crop = tf.unstack(tf.random_crop(tf.stack(imgs, axis=0), [2, self.crop_size, self.crop_size, self.chns]),
-                                  axis=0)
+            img_crop = tf.unstack(
+                tf.random_crop(tf.stack(imgs, axis=0), [2, self.crop_size, self.crop_size, self.chns]),
+                axis=0)
             return img_crop
 
         with tf.variable_scope('input'):
@@ -235,7 +238,7 @@ class DEBLUR(object):
 
         # build model
         self.build_model()
-           
+
         # learning rate decay
         self.lr = tf.train.polynomial_decay(self.learning_rate, global_step, self.max_steps, end_learning_rate=0.0,
                                             power=0.3)
@@ -248,10 +251,10 @@ class DEBLUR(object):
         gpu_options = tf.GPUOptions(allow_growth=True)
         sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=50, keep_checkpoint_every_n_hours=1)
+        self.saver = tf.train.Saver(self.all_vars, max_to_keep=50, keep_checkpoint_every_n_hours=1)
         if self.args.incremental_training == 1:
-            init_global_step = int(self.load(sess, self.train_dir, step=self.args.step))
-        self.sess = sess    
+            self.load(sess, self.train_dir, step=self.args.step)
+        self.sess = sess
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
@@ -286,7 +289,7 @@ class DEBLUR(object):
 
             # Save the model checkpoint periodically.
             if step % 1000 == 0 or step == self.max_steps:
-                #checkpoint_path = os.path.join(self.train_dir, 'checkpoints')
+                # checkpoint_path = os.path.join(self.train_dir, 'checkpoints')
                 self.save(sess, self.train_dir, step)
 
     def save(self, sess, checkpoint_dir, step):
