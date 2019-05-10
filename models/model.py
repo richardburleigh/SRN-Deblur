@@ -69,7 +69,7 @@ class DEBLUR(object):
         self.data_list = open(args.datalist, 'rt').read().splitlines()
         if args.shuffle == 1:
             random.shuffle(self.data_list)
-            f = open(args.datalist + '_rand.txt', 'w')
+            f = open(os.path.splitext(args.datalist)[0] + '_shuffle.txt', 'w')
             for item in self.data_list:
                 f.write(item + "\n")
             f.close()
