@@ -12,6 +12,7 @@ def parse_args():
     parser.add_argument('--datalist', type=str, default='./datalist_gopro.txt', help='training datalist')
     parser.add_argument('--model', type=str, default='color', help='model type: [lstm | gray | color]')
     parser.add_argument('--incremental_training', type=int, default=0, help='continue training with saved model or not')
+    parser.add_argument('--shuffle', type=int, default=1, help='shuffle datalist and save')
     parser.add_argument('--batch_size', help='training batch size', type=int, default=16)
     parser.add_argument('--epoch', help='training epoch number', type=int, default=4000)
     parser.add_argument('--lr', type=float, default=1e-4, dest='learning_rate', help='initial learning rate')

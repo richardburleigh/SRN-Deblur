@@ -67,8 +67,13 @@ class DEBLUR(object):
         # if args.phase == 'train':
         self.crop_size = 256
         self.data_list = open(args.datalist, 'rt').read().splitlines()
+        if args.shuffle == 1:
+            random.shuffle(self.data_list)
+            f = open(args.datalist + '_rand.txt', 'w')
+            for item in self.data_list:
+                f.write(item + "\n")
+            f.close()
         self.data_list = list(map(lambda x: x.split(' '), self.data_list))
-        random.shuffle(self.data_list)
         self.train_dir = os.path.join('./checkpoints', args.model)
         if not os.path.exists(self.train_dir):
             os.makedirs(self.train_dir)
