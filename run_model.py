@@ -29,8 +29,14 @@ def parse_args():
                         help='fill path file input for test video')
     parser.add_argument('--video_filepath_output', type=str, default='./result.mp4',
                         help='fill path file output for test video')
+    parser.add_argument('--video_filepath_origin', type=str, default='./origin.mp4',
+                        help='fill path file origin for test video')
+    parser.add_argument('--origin_path', type=str, default='./origin_img',
+                        help='input path for origin images')
     parser.add_argument('--step', type=int, default=None,
                         help='input step to use model')
+
+
     args = parser.parse_args()
     return args
 

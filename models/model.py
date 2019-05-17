@@ -10,13 +10,16 @@ import tensorflow.contrib.slim as slim
 from datetime import datetime
 from util.util import *
 from util.BasicConvLSTMCell import *
-
 import cv2
+import math
 from os.path import isfile, join
 
 
 class DEBLUR(object):
     def videoToFrames(self, video_filepath, input_path='./testing_set'):
+        if not os.path.exists(input_path):
+            os.makedirs(input_path)
+
         vidcap = cv2.VideoCapture(video_filepath)
         success, image = vidcap.read()
         count = 0
@@ -54,6 +57,7 @@ class DEBLUR(object):
 
     def testVideo(self, height, width, input_path, output_path, input_step=523000, video_filepath_input='./test.mp4',
                   video_filepath_output='./result.mp4'):
+        self.videoToFrames(self.video_filepath_origin, self.origin_path)
         fps = self.videoToFrames(video_filepath_input, input_path)
         self.test(height, width, input_path, output_path, input_step)
         self.convert_frames_to_video(output_path, video_filepath_output, fps)
@@ -83,6 +87,8 @@ class DEBLUR(object):
         self.data_size = (len(self.data_list)) // self.batch_size
         self.max_steps = int(self.epoch * self.data_size)
         self.learning_rate = args.learning_rate
+        self.origin_path = args.origin_path
+        self.video_filepath_origin = args.video_filepath_origin
 
     def input_producer(self, batch_size=10):
         def read_data():
@@ -339,6 +345,11 @@ class DEBLUR(object):
         self.saver = tf.train.Saver()
         self.load(sess, self.train_dir, step=input_step)
 
+        psnr_total = 0.0
+        psnr_num = 0
+        ssim_total = 0.0
+        ssim_num = 0
+
         for imgName in imgsName:
             blur = scipy.misc.imread(os.path.join(input_path, imgName))
             h, w, c = blur.shape
@@ -381,3 +392,28 @@ class DEBLUR(object):
             if rot:
                 res = np.transpose(res, [1, 0, 2])
             scipy.misc.imsave(os.path.join(output_path, imgName), res)
+
+            original = tf.image.decode_jpeg(tf.read_file(os.path.join(self.origin_path, imgName)))
+            contrast = tf.image.decode_jpeg(tf.read_file(os.path.join(output_path, imgName)))
+            start = time.time()
+            psnr = sess.run(tf.image.psnr(original, contrast, max_val=255.0))
+            ssim = sess.run(tf.image.ssim(original, contrast, max_val=255.0))
+            duration = time.time() - start
+            print('psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (psnr, ssim, duration))
+            psnr_total += psnr
+            psnr_num += 1
+            ssim_total += ssim
+            ssim_num += 1
+
+        if (psnr_num > 0):
+            print('psnr_avg: %.4f | ssim_avg: %.4f' % ((psnr_total/psnr_num), (ssim_total/ssim_num)))
+
+
+    def psnr(self, img1, img2, pixel_max = 255.0):
+        mse = np.mean( (img1 - img2) ** 2 )
+        if mse == 0:
+            return 100
+        return 20 * math.log10(pixel_max / math.sqrt(mse))
+    def load_image(self, pathfile):
+        with open (pathfile, 'rb') as f:
+            return np.array(f.read())
