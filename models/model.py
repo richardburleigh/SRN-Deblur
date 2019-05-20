@@ -393,7 +393,7 @@ class DEBLUR(object):
             if rot:
                 res = np.transpose(res, [1, 0, 2])
             scipy.misc.imsave(os.path.join(output_path, imgName), res)
-            if (self.show_evaluation == 1)
+            if (self.show_evaluation == 1):
                 original = tf.image.decode_jpeg(tf.read_file(os.path.join(self.origin_path, imgName)))
                 contrast = tf.image.decode_jpeg(tf.read_file(os.path.join(output_path, imgName)))
                 start = time.time()
