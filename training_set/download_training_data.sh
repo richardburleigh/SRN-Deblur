@@ -1,6 +1,4 @@
 #!/bin/bash
-
-sh download_drive.sh "1H0PIXvJH4c40pk7ou6nAwoxuR4Qh_Sa2" "2103.zip" && unzip "2103.zip" && mv train/* ./
-
-sh download_drive.sh "1fMmsELNKqNxqydHUkCO2S6a8Lm_StVFn" "8000.zip" && unzip "8000.zip"
+sh download_drive.sh "1VtNs3P9K7e5WoIgUjYk22YumzhPmMABx" "2103.zip" && tar -xvzf '2103.tar.gz' && mv GOPRO_Large/train/* ./
+sh download_drive.sh "1VafCnF74f_95kuMn4oPqNiIhZdvj_Bys" "8000.rar" && unrar "8000.rar"
 

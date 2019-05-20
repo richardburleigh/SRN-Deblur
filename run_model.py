@@ -33,6 +33,8 @@ def parse_args():
                         help='fill path file origin for test video')
     parser.add_argument('--origin_path', type=str, default='./origin_img',
                         help='input path for origin images')
+    parser.add_argument('--show_evaluation', type=int, default=0,
+                        help='flag show evaluation')
     parser.add_argument('--step', type=int, default=None,
                         help='input step to use model')
 

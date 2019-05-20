@@ -89,6 +89,7 @@ class DEBLUR(object):
         self.learning_rate = args.learning_rate
         self.origin_path = args.origin_path
         self.video_filepath_origin = args.video_filepath_origin
+        self.show_evaluation = args.show_evaluation
 
     def input_producer(self, batch_size=10):
         def read_data():
@@ -392,18 +393,18 @@ class DEBLUR(object):
             if rot:
                 res = np.transpose(res, [1, 0, 2])
             scipy.misc.imsave(os.path.join(output_path, imgName), res)
-
-            original = tf.image.decode_jpeg(tf.read_file(os.path.join(self.origin_path, imgName)))
-            contrast = tf.image.decode_jpeg(tf.read_file(os.path.join(output_path, imgName)))
-            start = time.time()
-            psnr = sess.run(tf.image.psnr(original, contrast, max_val=255.0))
-            ssim = sess.run(tf.image.ssim(original, contrast, max_val=255.0))
-            duration = time.time() - start
-            print('psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (psnr, ssim, duration))
-            psnr_total += psnr
-            psnr_num += 1
-            ssim_total += ssim
-            ssim_num += 1
+            if (self.show_evaluation == 1)
+                original = tf.image.decode_jpeg(tf.read_file(os.path.join(self.origin_path, imgName)))
+                contrast = tf.image.decode_jpeg(tf.read_file(os.path.join(output_path, imgName)))
+                start = time.time()
+                psnr = sess.run(tf.image.psnr(original, contrast, max_val=255.0))
+                ssim = sess.run(tf.image.ssim(original, contrast, max_val=255.0))
+                duration = time.time() - start
+                print('psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (psnr, ssim, duration))
+                psnr_total += psnr
+                psnr_num += 1
+                ssim_total += ssim
+                ssim_num += 1
 
         if (psnr_num > 0):
             print('psnr_avg: %.4f | ssim_avg: %.4f' % ((psnr_total/psnr_num), (ssim_total/ssim_num)))
