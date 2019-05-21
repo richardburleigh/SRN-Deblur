@@ -1,3 +1,5 @@
+# Installation
+
 ## Prerequisites
 - Python2.7
 - Scipy
@@ -19,20 +21,16 @@ conda install numpy
 conda install opencv-python
 ```
 
-## Installation
-Clone this project to your machine.
+## Unziping source code to folder SRN-Deblur
 
-```bash
-git clone https://github.com/relipa/SRN-Deblur.git
-cd SRN-Deblur
-```
-
-## Download pretrained models
+## Downloading pretrained models
 
 Run `download_model.sh` inside `checkpoints/` by command:
 ```bash
 sh download_model.sh
 ```
+
+# Testing
 
 ## Testing with Video
 
@@ -82,7 +80,7 @@ on a Gefore GTX 1050 TI with 4GB memory. For example,
 python run_model.py --height=720 --width=1280
 ```
 
-## Training
+# Training
 
 We trained our model using the dataset from
 [DeepDeblur_release](https://github.com/SeungjunNah/DeepDeblur_release).
@@ -97,7 +95,7 @@ Hyper parameters such as batch size, learning rate, epoch number can be tuned th
 python run_model.py --phase=train --batch=16 --lr=1e-4 --epoch=4000
 ```
 
-# Training continuous
+## Continuous Training
 
 Set `--incremental_training` is 1 to training continuous - default=0<br/>
 `--shuffle=0` to not shuffle - default=1<br/>
@@ -120,7 +118,7 @@ This model should produce visually sharper and quantitatively better results.
 ringing artifacts. So we train a model directly based on RGB images.
 This model keeps better color consistency, but the results are less sharp.
 
-## All Params
+# All Params
 
 `--phase`: determine whether train or test or testVideo - default='test'<br/>
 `--datalist`: training datalist - default='./datalist_gopro.txt'<br/>
@@ -142,7 +140,7 @@ This model keeps better color consistency, but the results are less sharp.
 `--show_evaluation`: show evaluation after testing - default=0<br/>
 `--step`: using model with a specific step - default=None
 
-### Evaluation
+## Evaluation
 
 `--type`: determine whether video or image - default='video'<br/>
 `--gpu`: use gpu or cpu - default='0' (=-1 for using cpu)<br/>
