@@ -115,25 +115,25 @@ This model keeps better color consistency, but the results are less sharp.
 
 ## All Params
 
-`--phase`: determine whether train or test or testVideo
-`--datalist`: training datalist
-`--model`: model type: [lstm | gray | color]
-`--incremental_training`: continue training with saved model or not
-`--shuffle`: shuffle datalist and save
-`--batch_size`: training batch size
-`--epoch`: training epoch number
-`--lr`: initial learning rate
-`--gpu`: use gpu or cpu
-`--height`: height for the tensorflow placeholder, should be multiples of 16
-`--width`: width for the tensorflow placeholder, should be multiple of 16 for 3 scales
-`--input_path`: input path for testing images
-`--output_path`: output path for testing images
-`--video_filepath_input`: fill path file input for test video
-`--video_filepath_output`: fill path file output for test video
-`--video_filepath_origin`: fill path file origin for test video
-`--origin_path`: input path for origin images
-`--show_evaluation`: flag show evaluation
-`--step`: input step to use model
+`--phase`: determine whether train or test or testVideo - default='test'
+`--datalist`: training datalist - default='./datalist_gopro.txt'
+`--model`: model type: [lstm | gray | color] - default='color'
+`--incremental_training`: continue training with saved model or not - default=0
+`--shuffle`: shuffle datalist and save - default=1
+`--batch_size`: training batch size - default=16
+`--epoch`: training epoch number - default=4000
+`--lr`: initial learning rate - default=1e-4
+`--gpu`: use gpu or cpu - default='0'
+`--height`: height for the tensorflow placeholder, should be multiples of 16 - default=720
+`--width`: width for the tensorflow placeholder, should be multiple of 16 for 3 scales - default=1280
+`--input_path`: input path for testing images - default='./testing_set'
+`--output_path`: output path for testing images - default='./testing_res'
+`--video_filepath_input`: fill path file input for test video - default='./test.mp4'
+`--video_filepath_output`: fill path file output for test video - default='./result.mp4'
+`--video_filepath_origin`: fill path file origin for test video - default='./origin.mp4'
+`--origin_path`: input path for origin images - default='./origin_img'
+`--show_evaluation`: flag show evaluation - default=0
+`--step`: input step to use model - default=None
 
 
 ### Evaluation
