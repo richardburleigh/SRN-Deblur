@@ -36,8 +36,8 @@ sh download_model.sh
 
 ## Testing with Video
 
-`--video_filepath_input=<INPUT_VIDEO>`: path for video input - default='./test.mp4'<br/>
-`--video_filepath_output=.<OUTPUT_VIDEO>`: path for video output - default='./result.mp4'<br/>
+`--video_filepath_input=<INPUT_VIDEO>`: path for input video - default='./test.mp4'<br/>
+`--video_filepath_output=.<OUTPUT_VIDEO>`: path for output video - default='./result.mp4'<br/>
 `--input_path`: path for storing list frames of input video - default='./testing_set'<br/>
 `--output_path`: path for storing list frames of output video - default='./testing_res'<br/>
 You need remove all image of `input_path` and `output_path` to store list frames of video before running test with video
