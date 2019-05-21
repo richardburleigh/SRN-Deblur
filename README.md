@@ -42,6 +42,9 @@ sh download_model.sh
 `--output_path`: path for storing list frames of output video - default='./testing_res'<br/>
 You need remove all image of `input_path` and `output_path` to store list frames of video before running test with video
 
+If you have a GPU, please include `--gpu` argument, and add your gpu id to your command.
+Otherwise, use `--gpu=-1` for CPU.
+
 ```bash
 rm -f testing_set/* && rm -f testing_res/* && python run_model.py --gpu=0 --phase=testVideo --model=color --video_filepath_input=./blur.mp4
 ```
@@ -132,22 +135,22 @@ This model keeps better color consistency, but the results are less sharp.
 `--width`: width for the tensorflow placeholder, should be multiple of 16 for 3 scales - default=1280<br/>
 `--input_path`: input path for testing images - default='./testing_set'<br/>
 `--output_path`: output path for testing images - default='./testing_res'<br/>
-`--video_filepath_input`: fill path file input for test video - default='./test.mp4'<br/>
-`--video_filepath_output`: fill path file output for test video - default='./result.mp4'<br/>
-`--video_filepath_origin`: fill path file origin for test video - default='./origin.mp4'<br/>
-`--origin_path`: input path for origin images - default='./origin_img'<br/>
-`--show_evaluation`: flag show evaluation - default=0<br/>
-`--step`: input step to use model - default=None
+`--video_filepath_input`: input path for testing video - default='./test.mp4'<br/>
+`--video_filepath_output`: output path for testing video - default='./result.mp4'<br/>
+`--video_filepath_origin`: original file path for evaluating output video - default='./origin.mp4'<br/>
+`--origin_path`: original file path for evaluating output image - default='./origin_img'<br/>
+`--show_evaluation`: show evaluation after testing - default=0<br/>
+`--step`: using model with a specific step - default=None
 
 ### Evaluation
 
 `--type`: determine whether video or image - default='video'<br/>
 `--gpu`: use gpu or cpu - default='0' (=-1 for using cpu)<br/>
-`--input_path_1`: input path 1 for compare images - default='./input_path_1'<br/>
-`--input_path_2`: input path 2 for compare images - default='./input_path_2'<br/>
-`--video_input_1`: fill path file input 1 for compare video - default='./test.mp4'<br/>
-`--video_input_2`: fill path file input 2 for compare video - default='./result.mp4'<br/>
-`--max_val`: max bit in images - default=255.0
+`--input_path_1`: input path 1 for comparing images - default='./input_path_1'<br/>
+`--input_path_2`: input path 2 for comparing images - default='./input_path_2'<br/>
+`--video_input_1`: input path 1 for comparing video - default='./test.mp4'<br/>
+`--video_input_2`: input path 2 for comparing video - default='./result.mp4'<br/>
+`--max_val`: maximum possible pixel value of the image - default=255.0
 
 ```bash
 python evaluation.py --video_input_1=./blur.mp4 --video_input_2=./origin.mp4 --type=video
