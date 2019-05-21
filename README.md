@@ -34,6 +34,15 @@ Run `download_model.sh` inside `checkpoints/` by command:
 sh download_model.sh
 ```
 
+## Test Video
+`--video_filepath_input=./blur.mp4` to set video input
+`--video_filepath_output=./result.mp4` to set video output
+You need remove all image of `input_path` and `output_path` to store list frames of video
+
+```bash
+rm -f testing_set/* && rm -f testing_res/* && python run_model.py --gpu=0 --phase=testVideo --model=color --video_filepath_input=./blur.mp4
+```
+
 ## Testing with image
 
 To test blur images in a folder, just use arguments
@@ -104,21 +113,27 @@ This model should produce visually sharper and quantitatively better results.
 ringing artifacts. So we train a model directly based on RGB images.
 This model keeps better color consistency, but the results are less sharp.
 
-### How to choose
+## All Params
 
-If you would like to compare performance against our method, you can use
-model `gray` and `lstm`.
-If you want to restore blurry images you can try `gray` and `color`.
-And `color` is very useful in low-light noisy images.
-
-## Test Video
-`--video_filepath_input=./blur.mp4` to set video input
-`--video_filepath_output=./result.mp4` to set video output
-You need remove all image of `input_path` and `output_path` to store list frames of video
-
-```bash
-rm -f testing_set/* && rm -f testing_res/* && python run_model.py --gpu=0 --phase=testVideo --model=color --video_filepath_input=./blur.mp4
-```
+`--phase`: determine whether train or test or testVideo
+`--datalist`: training datalist
+`--model`: model type: [lstm | gray | color]
+`--incremental_training`: continue training with saved model or not
+`--shuffle`: shuffle datalist and save
+`--batch_size`: training batch size
+`--epoch`: training epoch number
+`--lr`: initial learning rate
+`--gpu`: use gpu or cpu
+`--height`: height for the tensorflow placeholder, should be multiples of 16
+`--width`: width for the tensorflow placeholder, should be multiple of 16 for 3 scales
+`--input_path`: input path for testing images
+`--output_path`: output path for testing images
+`--video_filepath_input`: fill path file input for test video
+`--video_filepath_output`: fill path file output for test video
+`--video_filepath_origin`: fill path file origin for test video
+`--origin_path`: input path for origin images
+`--show_evaluation`: flag show evaluation
+`--step`: input step to use model
 
 
 ### Evaluation
