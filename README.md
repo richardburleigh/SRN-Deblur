@@ -140,7 +140,7 @@ This model keeps better color consistency, but the results are less sharp.
 `--show_evaluation`: show evaluation after testing - default=0<br/>
 `--step`: using model with a specific step - default=None
 
-## Evaluation
+# Evaluation
 
 `--type`: determine whether video or image - default='video'<br/>
 `--gpu`: use gpu or cpu - default='0' (=-1 for using cpu)<br/>
