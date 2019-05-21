@@ -8,7 +8,7 @@
 - Tensorflow 1.4 with NVIDIA GPU or CPU (cpu testing is very slow)
 - Opencv-python
 
-## SETUP env for ubuntu 18.04
+## Example for ubuntu 18.04
 ```bash
 wget https://repo.anaconda.com/archive/Anaconda2-2019.03-Linux-x86_64.sh
 sha256sum Anaconda2-2019.03-Linux-x86_64.sh
@@ -21,7 +21,7 @@ conda install numpy
 conda install opencv-python
 ```
 
-## Unziping source code to folder SRN-Deblur
+### Unziping source code to folder SRN-Deblur
 
 ## Downloading pretrained models
 
