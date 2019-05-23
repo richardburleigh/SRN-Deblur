@@ -68,7 +68,7 @@ def compare_img(img_path_1, img_path_2, max_val=255.0):
     psnr = sess.run(tf.image.psnr(img1, img2, max_val))
     ssim = sess.run(tf.image.ssim(img1, img2, max_val))
     duration = time.time() - start
-    print('psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (psnr, ssim, duration))
+    print('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (img_path_1, psnr, ssim, duration))
     global psnr_total
     global ssim_total
     global num
