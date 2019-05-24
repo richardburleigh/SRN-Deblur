@@ -42,7 +42,7 @@ def main(_):
         fps1 = videoToFrames(args.video_input_1, args.input_path_1)
         fps2 = videoToFrames(args.video_input_2, args.input_path_2)
     imgsName = os.listdir(args.input_path_1)
-    thread = []
+
     num = 0
     psnr_total = 0;
     ssim_total = 0;
