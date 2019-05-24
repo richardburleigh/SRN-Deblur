@@ -6,12 +6,9 @@ import threading
 import scipy.misc
 import time
 import threading
+import multiprocessing
 # import models.model_gray as model
 # import models.model_color as model
-
-psnr_total = 0.0
-num = 0
-ssim_total = 0.0
 
 def parse_args():
     parser = argparse.ArgumentParser(description='deblur arguments')
@@ -46,21 +43,24 @@ def main(_):
         fps2 = videoToFrames(args.video_input_2, args.input_path_2)
     imgsName = os.listdir(args.input_path_1)
     thread = []
-    num_thread_created = 0
-    max_num_thread = 50
+    num = 0
+    psnr_total = 0;
+    ssim_total = 0;
+    pool = multiprocessing.Pool()
     for imgName in imgsName:
-        global num
         img_path_1 = os.path.join(args.input_path_1, imgName)
         img_path_2 = os.path.join(args.input_path_2, imgName)
-        while (num_thread_created > num + max_num_thread):
-            time.sleep(3)
-        t = threading.Thread(target = compare_img, args = (img_path_1, img_path_2, args.max_val))
-        t.start()
-        num_thread_created += 1
+        pool_result = pool.apply_async(compare_img, args = (img_path_1, img_path_2, args.max_val))
+        result = pool_result.get()
+        psnr_total += result[0]
+        ssim_total += result[1]
+        num += 1
 
-    if (num_thread_created > 0):
-        t = threading.Thread(target = thread_check_done, args = (num_thread_created, ))
-        t.start()
+    pool.close()
+    pool.join()
+
+    print('psnr_avg: %.4f | ssim_avg: %.4f' % ((psnr_total/num), (ssim_total/num)))
+
 
 def compare_img(img_path_1, img_path_2, max_val=255.0):
     sess = tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True)))
@@ -71,29 +71,11 @@ def compare_img(img_path_1, img_path_2, max_val=255.0):
     ssim = sess.run(tf.image.ssim(img1, img2, max_val))
     duration = time.time() - start
     print('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (img_path_1, psnr, ssim, duration))
-
     f = open('./output.txt', 'a')
     f.write('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs \n' % (img_path_1, psnr, ssim, duration))
     f.close()
-    global psnr_total
-    global ssim_total
-    global num
-    psnr_total += psnr
-    ssim_total += ssim
-    num += 1
 
     return [psnr, ssim]
-
-def thread_check_done(max):
-    global num
-    if (num == max):
-        global psnr_total
-        global ssim_total
-        print('psnr_avg: %.4f | ssim_avg: %.4f' % ((psnr_total/num), (ssim_total/num)))
-        return
-    time.sleep(1)
-    thread_check_done(max)
-
 
 def videoToFrames(video_filepath, input_path='./testing_set'):
     if not os.path.exists(input_path):
