@@ -46,18 +46,20 @@ def main(_):
         fps2 = videoToFrames(args.video_input_2, args.input_path_2)
     imgsName = os.listdir(args.input_path_1)
     thread = []
-    num = 0
+    num_thread_created = 0
+    max_num_thread = 50
     for imgName in imgsName:
+        global num
         img_path_1 = os.path.join(args.input_path_1, imgName)
         img_path_2 = os.path.join(args.input_path_2, imgName)
+        while (num_thread_created > num + max_num_thread):
+            time.sleep(3)
         t = threading.Thread(target = compare_img, args = (img_path_1, img_path_2, args.max_val))
         t.start()
-        # thread.append(t)
-        # compare = compare_img(sess, img_path_1, img_path_2, args.max_val)
-        num += 1
+        num_thread_created += 1
 
-    if (num > 0):
-        t = threading.Thread(target = thread_check_done, args = (num, ))
+    if (num_thread_created > 0):
+        t = threading.Thread(target = thread_check_done, args = (num_thread_created, ))
         t.start()
 
 def compare_img(img_path_1, img_path_2, max_val=255.0):
@@ -69,6 +71,10 @@ def compare_img(img_path_1, img_path_2, max_val=255.0):
     ssim = sess.run(tf.image.ssim(img1, img2, max_val))
     duration = time.time() - start
     print('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (img_path_1, psnr, ssim, duration))
+
+    f = open('./output.txt', 'a')
+    f.write('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs \n' % (img_path_1, psnr, ssim, duration))
+    f.close()
     global psnr_total
     global ssim_total
     global num
