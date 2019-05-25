@@ -28,6 +28,10 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+fixed_data = None
+def initializer(init_data):
+    global fixed_data
+    fixed_data = init_data
 
 def main(_):
     args = parse_args()
@@ -43,39 +47,47 @@ def main(_):
         fps2 = videoToFrames(args.video_input_2, args.input_path_2)
     imgsName = os.listdir(args.input_path_1)
 
-    chunk_size = 50
-    pool = multiprocessing.Pool()
+
     pool_args = [];
-    for imgName in imgsName:
-        img_path_1 = os.path.join(args.input_path_1, imgName)
-        img_path_2 = os.path.join(args.input_path_2, imgName)
-        pool_args.append((img_path_1, img_path_2, args.max_val))
-        
-    results = pool.imap(wrap_compare_img, pool_args, chunksize=chunk_size)
+    chunk_size = 24
     num = 0
     psnr_total = 0
     ssim_total = 0
-    for result in results:
-        psnr_total += result[0]
-        ssim_total += result[1]
-        num +=1
-        
+    
+    for i in range(0, len(imgsName), chunk_size):
+        pool = multiprocessing.Pool(None, initializer, (args.max_val,))
+        for imgName in imgsName[i:i+chunk_size]:
+            img_path_1 = os.path.join(args.input_path_1, imgName)
+            img_path_2 = os.path.join(args.input_path_2, imgName)
+            pool_args.append((img_path_1, img_path_2))
+       
+        results = pool.imap_unordered(wrap_compare_img, pool_args)
+        pool.close()
+        pool.join()
+        pool.terminate()
+
+        for result in results:
+            psnr_total += result[0]
+            ssim_total += result[1]
+            num +=1
+
+
     print('psnr_avg: %.4f | ssim_avg: %.4f' % ((psnr_total/num), (ssim_total/num)))
 
 def wrap_compare_img(args):
-    return compare_img(*args)
+    return compare_img(args, fixed_data)
 
-def compare_img(img_path_1, img_path_2, max_val=255.0):
+def compare_img(img_path, max_val=255.0):
     sess = tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True)))
-    img1 = tf.image.decode_jpeg(tf.read_file(img_path_1))
-    img2 = tf.image.decode_jpeg(tf.read_file(img_path_2))
+    img1 = tf.image.decode_jpeg(tf.read_file(img_path[0]))
+    img2 = tf.image.decode_jpeg(tf.read_file(img_path[1]))
     start = time.time()
     psnr = sess.run(tf.image.psnr(img1, img2, max_val))
     ssim = sess.run(tf.image.ssim(img1, img2, max_val))
     duration = time.time() - start
-    print('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (img_path_1, psnr, ssim, duration))
+    print('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (img_path[0], psnr, ssim, duration))
     f = open('./output.txt', 'a')
-    f.write('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs \n' % (img_path_1, psnr, ssim, duration))
+    f.write('path: %s | psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs \n' % (img_path[0], psnr, ssim, duration))
     f.close()
 
     return [psnr, ssim]
