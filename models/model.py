@@ -10,9 +10,59 @@ import tensorflow.contrib.slim as slim
 from datetime import datetime
 from util.util import *
 from util.BasicConvLSTMCell import *
+import cv2
+import math
+from os.path import isfile, join
 
 
 class DEBLUR(object):
+    def videoToFrames(self, video_filepath, input_path='./testing_set'):
+        if not os.path.exists(input_path):
+            os.makedirs(input_path)
+
+        vidcap = cv2.VideoCapture(video_filepath)
+        success, image = vidcap.read()
+        count = 0
+        while success:
+            cv2.imwrite(input_path + "/frame%d.jpg" % count, image)  # save frame as JPEG file
+            success, image = vidcap.read()
+            print('Read a new frame: ', success)
+            count += 1
+        vidcap.set(cv2.CAP_PROP_POS_AVI_RATIO, 1)
+        fps = 1000 * vidcap.get(cv2.CAP_PROP_FRAME_COUNT) / vidcap.get(cv2.CAP_PROP_POS_MSEC)
+        return fps
+
+    def convert_frames_to_video(self, pathIn, pathOut, fps):
+        frame_array = []
+        files = [f for f in os.listdir(pathIn) if isfile(join(pathIn, f))]
+        # for sorting the file names properly
+        files.sort(key=lambda x: int(x[5:-4]))
+
+        for i in range(len(files)):
+            filename = pathIn + '/' + files[i]
+            # reading each files
+            img = cv2.imread(filename)
+            height, width, layers = img.shape
+            size = (width, height)
+            print(filename)
+            # inserting the frames into an image array
+            frame_array.append(img)
+
+        out = cv2.VideoWriter(pathOut, cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
+
+        for i in range(len(frame_array)):
+            # writing to a image array
+            out.write(frame_array[i])
+        out.release()
+
+    def testVideo(self, height, width, input_path, output_path, input_step=523000, video_filepath_input='./test.mp4',
+                  video_filepath_output='./result.mp4'):
+        if (self.show_evaluation == 1):
+            self.videoToFrames(self.video_filepath_origin, self.origin_path)
+        fps = self.videoToFrames(video_filepath_input, input_path)
+        self.test(height, width, input_path, output_path, input_step)
+        self.convert_frames_to_video(output_path, video_filepath_output, fps)
+
     def __init__(self, args):
         self.args = args
         self.n_levels = 3
@@ -22,8 +72,13 @@ class DEBLUR(object):
         # if args.phase == 'train':
         self.crop_size = 256
         self.data_list = open(args.datalist, 'rt').read().splitlines()
+        if args.shuffle == 1:
+            random.shuffle(self.data_list)
+            f = open(os.path.splitext(args.datalist)[0] + '_shuffle.txt', 'w')
+            for item in self.data_list:
+                f.write(item + "\n")
+            f.close()
         self.data_list = list(map(lambda x: x.split(' '), self.data_list))
-        random.shuffle(self.data_list)
         self.train_dir = os.path.join('./checkpoints', args.model)
         if not os.path.exists(self.train_dir):
             os.makedirs(self.train_dir)
@@ -33,6 +88,9 @@ class DEBLUR(object):
         self.data_size = (len(self.data_list)) // self.batch_size
         self.max_steps = int(self.epoch * self.data_size)
         self.learning_rate = args.learning_rate
+        self.origin_path = args.origin_path
+        self.video_filepath_origin = args.video_filepath_origin
+        self.show_evaluation = args.show_evaluation
 
     def input_producer(self, batch_size=10):
         def read_data():
@@ -47,8 +105,9 @@ class DEBLUR(object):
             imgs = [tf.cast(img, tf.float32) / 255.0 for img in imgs]
             if self.args.model != 'color':
                 imgs = [tf.image.rgb_to_grayscale(img) for img in imgs]
-            img_crop = tf.unstack(tf.random_crop(tf.stack(imgs, axis=0), [2, self.crop_size, self.crop_size, self.chns]),
-                                  axis=0)
+            img_crop = tf.unstack(
+                tf.random_crop(tf.stack(imgs, axis=0), [2, self.crop_size, self.crop_size, self.chns]),
+                axis=0)
             return img_crop
 
         with tf.variable_scope('input'):
@@ -176,7 +235,18 @@ class DEBLUR(object):
                 train_op = train_op.minimize(loss, global_step, var_list)
             return train_op
 
-        global_step = tf.Variable(initial_value=0, dtype=tf.int32, trainable=False)
+        init_global_step = 0
+        if self.args.incremental_training == 1:
+            if self.args.step is not None:
+                init_global_step = self.args.step
+            else:
+                ckpt = tf.train.get_checkpoint_state(self.train_dir)
+                ckpt_name = os.path.basename(ckpt.model_checkpoint_path)
+                ckpt_iter = ckpt_name.split('-')[1]
+                init_global_step = int(ckpt_iter)
+        self.max_steps += init_global_step
+
+        global_step = tf.Variable(initial_value=init_global_step, dtype=tf.int32, trainable=False)
         self.global_step = global_step
 
         # build model
@@ -193,9 +263,11 @@ class DEBLUR(object):
         # session and thread
         gpu_options = tf.GPUOptions(allow_growth=True)
         sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-        self.sess = sess
         sess.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=50, keep_checkpoint_every_n_hours=1)
+        self.saver = tf.train.Saver(self.all_vars, max_to_keep=50, keep_checkpoint_every_n_hours=1)
+        if self.args.incremental_training == 1:
+            self.load(sess, self.train_dir, step=self.args.step)
+        self.sess = sess
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
@@ -230,8 +302,8 @@ class DEBLUR(object):
 
             # Save the model checkpoint periodically.
             if step % 1000 == 0 or step == self.max_steps:
-                checkpoint_path = os.path.join(self.train_dir, 'checkpoints')
-                self.save(sess, checkpoint_path, step)
+                # checkpoint_path = os.path.join(self.train_dir, 'checkpoints')
+                self.save(sess, self.train_dir, step)
 
     def save(self, sess, checkpoint_dir, step):
         model_name = "deblur.model"
@@ -259,7 +331,7 @@ class DEBLUR(object):
             print(" [*] Reading checkpoints... ERROR")
             return False
 
-    def test(self, height, width, input_path, output_path):
+    def test(self, height, width, input_path, output_path, input_step=523000):
         if not os.path.exists(output_path):
             os.makedirs(output_path)
         imgsName = sorted(os.listdir(input_path))
@@ -273,7 +345,12 @@ class DEBLUR(object):
         sess = tf.Session(config=tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True)))
 
         self.saver = tf.train.Saver()
-        self.load(sess, self.train_dir, step=523000)
+        self.load(sess, self.train_dir, step=input_step)
+
+        psnr_total = 0.0
+        psnr_num = 0
+        ssim_total = 0.0
+        ssim_num = 0
 
         for imgName in imgsName:
             blur = scipy.misc.imread(os.path.join(input_path, imgName))
@@ -317,3 +394,28 @@ class DEBLUR(object):
             if rot:
                 res = np.transpose(res, [1, 0, 2])
             scipy.misc.imsave(os.path.join(output_path, imgName), res)
+            if (self.show_evaluation == 1):
+                original = tf.image.decode_jpeg(tf.read_file(os.path.join(self.origin_path, imgName)))
+                contrast = tf.image.decode_jpeg(tf.read_file(os.path.join(output_path, imgName)))
+                start = time.time()
+                psnr = sess.run(tf.image.psnr(original, contrast, max_val=255.0))
+                ssim = sess.run(tf.image.ssim(original, contrast, max_val=255.0))
+                duration = time.time() - start
+                print('psnr: %.4f | ssim: %.4f ... calc_duration: %4.3fs' % (psnr, ssim, duration))
+                psnr_total += psnr
+                psnr_num += 1
+                ssim_total += ssim
+                ssim_num += 1
+
+        if (psnr_num > 0):
+            print('psnr_avg: %.4f | ssim_avg: %.4f' % ((psnr_total/psnr_num), (ssim_total/ssim_num)))
+
+
+    def psnr(self, img1, img2, pixel_max = 255.0):
+        mse = np.mean( (img1 - img2) ** 2 )
+        if mse == 0:
+            return 100
+        return 20 * math.log10(pixel_max / math.sqrt(mse))
+    def load_image(self, pathfile):
+        with open (pathfile, 'rb') as f:
+            return np.array(f.read())
